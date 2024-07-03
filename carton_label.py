@@ -1,18 +1,35 @@
 import barcode #for barcode generation
+import cups #for printing
 from barcode.writer import SVGWriter #for barcode generation
 from fpdf import FPDF #for PDF generation
 import tempfile #for temporary saving the barcode
 
 
+def print_file(file_path, printer_name):
+
+    conn = cups. Connection()
+
+    printers = conn.getPrinters()
+    
+    if printer_name in printers:
+        try:
+            conn.printFile(printer_name, file_path, "Print Job", {})
+            print("File sent to printer successfully.")
+        except cups.IPPError as e:
+            print(f"Error printing file: {e}")
+    else:
+        print(f"Printer '{printer_name}' not found.")
+
+
 
 # General Values:
 carton_id = "1003092703"
+order_number = "1046"
 carriage_class_code = "P"
+
 
 # Erstellen Sie einen Code 128 Barcode
 code128 = barcode.get('code128', carton_id, writer=SVGWriter())
-
-
 # Optionen für den Barcode definieren
 options = {
     'module_width': 0.4,  # Breite eines Moduls in mm
@@ -28,8 +45,6 @@ options = {
 
 # Barcode mit benutzerdefinierten Optionen speichern
 filename = code128.save('custom_barcode', options=options)
-
-
 # Speichern Sie den Barcode als PNG-Datei
 filename = code128.save('code128_barcode')
 
@@ -40,15 +55,22 @@ with tempfile.NamedTemporaryFile(delete=False, suffix=".svg") as temp:
 
 
 # generate PDF
-
-
-
 pdf = FPDF("L", "mm", (57, 80))
 pdf.set_margins(0, 0, 0)
-pdf.set_font("Arial", size = 50) # set font and size
+
 
 pdf.add_page()
-pdf.interleaved2of5("1337", x=10, y=35, w=4, h=20) # add barcode
-pdf.text(60, 20, "P")# add carriage class code
+
+pdf.interleaved2of5("1337", x=10, y=25, w=4, h=30) # add barcode
+
+pdf.set_font("Arial", size = 50) # set font and size for carriage class code
+pdf.text(60, 20, carriage_class_code) # add carriage class code
+
+pdf.set_font("Arial", size = 10) # set font and size for order_number
+pdf.text(10, 20, order_number) # add order number
 
 pdf.output('sample.pdf', 'F')
+
+file_to_print = "sample.pdf"
+printer_name = "alere_prima"
+print_file(file_to_print, printer_name)
