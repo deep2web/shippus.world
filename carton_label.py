@@ -55,21 +55,47 @@ with tempfile.NamedTemporaryFile(delete=False, suffix=".svg") as temp:
 
 
 # generate PDF
-pdf = FPDF("L", "mm", (57, 80))
+pdf = FPDF("L", "mm", (57, 170))
 pdf.set_margins(0, 0, 0)
 
 
 pdf.add_page()
 
-pdf.interleaved2of5("1337", x=10, y=25, w=4, h=30) # add barcode
+pdf.interleaved2of5(carton_id, x=5, y=25, w=2, h=30) # add barcode
 
 pdf.set_font("Arial", size = 50) # set font and size for carriage class code
 pdf.text(60, 20, carriage_class_code) # add carriage class code
 
-pdf.set_font("Arial", size = 10) # set font and size for order_number
-pdf.text(10, 20, order_number) # add order number
+
+pdf.set_font("Arial", size = 9) # set font and size for order_number and carton_id
+pdf.text(5, 16, "Carton ID:") # add order number
+pdf.text(5, 6, "Order No.:") # add order number
+
+pdf.set_font("Arial", size = 17) # set font and size for order_number and carton_id
+pdf.text(5, 21, carton_id) # add order number
+pdf.text(5, 11, order_number) # add order number
+
+
+
+
+
+
+pdf.interleaved2of5(carton_id, x=100, y=25, w=2, h=30) # add barcode
+
+pdf.set_font("Arial", size = 50) # set font and size for carriage class code
+pdf.text(155, 20, carriage_class_code) # add carriage class code
+
+
+pdf.set_font("Arial", size = 9) # set font and size for order_number and carton_id
+pdf.text(100, 16, "Carton ID:") # add order number
+pdf.text(100, 6, "Order No.:") # add order number
+
+pdf.set_font("Arial", size = 17) # set font and size for order_number and carton_id
+pdf.text(100, 21, carton_id) # add order number
+pdf.text(100, 11, order_number) # add order number
 
 pdf.output('sample.pdf', 'F')
+
 
 file_to_print = "sample.pdf"
 printer_name = "alere_prima"
