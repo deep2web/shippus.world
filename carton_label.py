@@ -4,7 +4,7 @@ from barcode.writer import SVGWriter #for barcode generation
 from fpdf import FPDF #for PDF generation
 import tempfile #for temporary saving the barcode
 
-
+# Druckereinstellungen festlegen
 def print_file(file_path, printer_name):
 
     conn = cups. Connection()
@@ -42,61 +42,51 @@ options = {
     'write_text': False,   # Text unter dem Barcode anzeigen
     #'text': 'Custom Text' # Benutzerdefinierter Text (optional)
 }
-
-# Barcode mit benutzerdefinierten Optionen speichern
-filename = code128.save('custom_barcode', options=options)
-# Speichern Sie den Barcode als PNG-Datei
-filename = code128.save('code128_barcode')
-
+# Barcode in eine temporäre Datei schreiben
 with tempfile.NamedTemporaryFile(delete=False, suffix=".svg") as temp:
     code128.write(temp, options=options)
     temp_barcode = temp.name
 
 
 
-# generate PDF
-pdf = FPDF("L", "mm", (57, 170))
-pdf.set_margins(0, 0, 0)
+from fpdf import FPDF
 
+def generate_pdf(carton_id, carriage_class_code, order_number):
+    # generate PDF
+    pdf = FPDF("L", "mm", (57, 170))
+    pdf.set_margins(0, 0, 0)
 
-pdf.add_page()
+    pdf.add_page()
 
-pdf.interleaved2of5(carton_id, x=5, y=25, w=2, h=30) # add barcode
+    pdf.interleaved2of5(carton_id, x=5, y=25, w=2, h=30) # add barcode
 
-pdf.set_font("Arial", size = 50) # set font and size for carriage class code
-pdf.text(60, 20, carriage_class_code) # add carriage class code
+    pdf.set_font("Arial", size = 50) # set font and size for carriage class code
+    pdf.text(60, 20, carriage_class_code) # add carriage class code
 
+    pdf.set_font("Arial", size = 9) # set font and size for order_number and carton_id
+    pdf.text(5, 16, "Carton ID:") # add order number
+    pdf.text(5, 6, "Order No.:") # add order number
 
-pdf.set_font("Arial", size = 9) # set font and size for order_number and carton_id
-pdf.text(5, 16, "Carton ID:") # add order number
-pdf.text(5, 6, "Order No.:") # add order number
+    pdf.set_font("Arial", size = 17) # set font and size for order_number and carton_id
+    pdf.text(5, 21, carton_id) # add order number
+    pdf.text(5, 11, order_number) # add order number
 
-pdf.set_font("Arial", size = 17) # set font and size for order_number and carton_id
-pdf.text(5, 21, carton_id) # add order number
-pdf.text(5, 11, order_number) # add order number
+    pdf.interleaved2of5(carton_id, x=100, y=25, w=2, h=30) # add barcode
 
+    pdf.set_font("Arial", size = 50) # set font and size for carriage class code
+    pdf.text(155, 20, carriage_class_code) # add carriage class code
 
+    pdf.set_font("Arial", size = 9) # set font and size for order_number and carton_id
+    pdf.text(100, 16, "Carton ID:") # add order number
+    pdf.text(100, 6, "Order No.:") # add order number
 
+    pdf.set_font("Arial", size = 17) # set font and size for order_number and carton_id
+    pdf.text(100, 21, carton_id) # add order number
+    pdf.text(100, 11, order_number) # add order number
 
+    pdf.output('sample.pdf', 'F')
 
+    file_to_print = "sample.pdf"
+    printer_name = "alere_prima"
+    #print_file(file_to_print, printer_name)
 
-pdf.interleaved2of5(carton_id, x=100, y=25, w=2, h=30) # add barcode
-
-pdf.set_font("Arial", size = 50) # set font and size for carriage class code
-pdf.text(155, 20, carriage_class_code) # add carriage class code
-
-
-pdf.set_font("Arial", size = 9) # set font and size for order_number and carton_id
-pdf.text(100, 16, "Carton ID:") # add order number
-pdf.text(100, 6, "Order No.:") # add order number
-
-pdf.set_font("Arial", size = 17) # set font and size for order_number and carton_id
-pdf.text(100, 21, carton_id) # add order number
-pdf.text(100, 11, order_number) # add order number
-
-pdf.output('sample.pdf', 'F')
-
-
-file_to_print = "sample.pdf"
-printer_name = "alere_prima"
-print_file(file_to_print, printer_name)
