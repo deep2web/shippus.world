@@ -5,15 +5,24 @@ import os
 import pymupdf
 import random
 import string
+from google.cloud import storage
 
+# Initialize Flask app
 app = Flask(__name__)
 api = Api(app, version='1.0', title='API für Paketlabel', description='Eine API zum Hochladen und Verarbeiten von Paketlabels')
 
+# Configure storage bucket
+storage_client = storage.Client()
+bucket_name = 'your-bucket-name'  # Replace with your actual bucket name
+bucket = storage_client.bucket(bucket_name)
+
+# Define upload and processed folders
 UPLOAD_FOLDER = './uploads'
 PROCESSED_FOLDER = './processed'
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 app.config['PROCESSED_FOLDER'] = PROCESSED_FOLDER
 
+# Swagger UI setup
 SWAGGER_URL = '/api/docs'  # URL for exposing Swagger UI (without trailing '/')
 API_URL = '/static/swagger.json'  # Our API url (can of course be a local resource)
 
@@ -28,9 +37,11 @@ swaggerui_blueprint = get_swaggerui_blueprint(
 
 app.register_blueprint(swaggerui_blueprint, url_prefix=SWAGGER_URL)
 
+# Define parser for file uploads
 upload_parser = api.parser()
 upload_parser.add_argument('file', location='files', type='file', required=True)
 
+# Upload endpoint
 @api.route('/upload')
 class Upload(Resource):
     @api.expect(upload_parser)
@@ -54,12 +65,21 @@ class Upload(Resource):
         print(f"Received file with filename: {file.filename}")
         print(f"New filename: {filename}")
 
+        # Save the file to the temporary upload folder
         file.save(os.path.join(app.config['UPLOAD_FOLDER'], filename))
         print(f"File saved to: {os.path.join(app.config['UPLOAD_FOLDER'], filename)}")
+
+        # Process the file
         process_file(filename)
-        return 'File processed successfully', 200
 
+        # Upload the processed file to Cloud Storage
+        blob = bucket.blob(filename.replace(".pdf", "-4x6.pdf"))
+        blob.upload_from_filename(os.path.join(app.config['PROCESSED_FOLDER'], filename.replace(".pdf", "-4x6.pdf")))
 
+        # Return success message
+        return 'File processed and uploaded to Cloud Storage successfully', 200
+
+# File processing function
 def process_file(filename):
     origfile = os.path.join(app.config['UPLOAD_FOLDER'], filename)
 
@@ -110,9 +130,15 @@ def process_file(filename):
     # Delete the original file from the upload folder
     os.remove(origfile)
 
+# Download endpoint
 @api.route('/download/<filename>')
 class Download(Resource):
     def get(self, filename):
+        # Download the file from Cloud Storage
+        blob = bucket.blob(filename)
+        blob.download_to_filename(os.path.join(app.config['PROCESSED_FOLDER'], filename))
+
+        # Return the downloaded file
         return send_from_directory(app.config['PROCESSED_FOLDER'], filename, as_attachment=True)
 
 if __name__ == '__main__':
