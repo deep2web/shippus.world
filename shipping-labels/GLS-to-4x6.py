@@ -49,4 +49,3 @@ new_doc.save("gls-4x6.pdf")
 os.remove("gls-1.pdf") #cleanup
 os.remove("gls-2.pdf") #cleanup
 os.remove("gls-1+2.pdf") #cleanup
-
